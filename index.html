@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>2026 FIFA 월드컵 우승국 예측</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#e8c468;--gold2:#c9a24b;--champ:#f3e3bb;
+  --ink:#07091a;--navy:#0d1530;
+  --card:rgba(10,16,40,.78);--card2:rgba(255,255,255,.05);
+  --border:rgba(232,196,104,.18);--soft:rgba(255,255,255,.09);
+  --green:#3ddc84;--red:#ff6b6b;--blue:#5b9dff;
+  --text:#eef1f8;--muted:#8d96ad;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;color:var(--text);min-height:100vh;background:var(--ink)}
+body::before{content:"";position:fixed;inset:0;z-index:-2;
+  background:url('https://images.unsplash.com/photo-1522778119026-d647f0596c20?q=80&w=2400&auto=format&fit=crop') center/cover no-repeat fixed}
+body::after{content:"";position:fixed;inset:0;z-index:-1;
+  background:radial-gradient(ellipse at 50% -5%,rgba(232,196,104,.12),transparent 55%),
+             linear-gradient(180deg,rgba(7,10,24,.88),rgba(5,7,18,.97))}
+
+/* ── 잠금 화면 ── */
+#lock{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;
+  padding:20px;background:rgba(5,7,18,.6);backdrop-filter:blur(16px)}
+.lock-card{background:linear-gradient(160deg,rgba(18,26,58,.97),rgba(10,14,32,.98));
+  border:1px solid var(--border);border-radius:26px;padding:50px 44px;
+  width:100%;max-width:420px;text-align:center;
+  box-shadow:0 32px 90px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.07)}
+.lock-trophy{font-size:64px;filter:drop-shadow(0 6px 20px rgba(232,196,104,.5))}
+.lock-card h2{font-family:'Oswald',sans-serif;font-size:1.5rem;letter-spacing:.07em;margin-top:14px;
+  background:linear-gradient(90deg,var(--champ),var(--gold),var(--champ));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.lock-card p{color:var(--muted);font-size:.85rem;margin-top:8px}
+.lock-input{width:100%;margin-top:24px;padding:14px 18px;border-radius:12px;
+  border:1px solid var(--border);background:rgba(255,255,255,.06);color:#fff;
+  font-size:1rem;text-align:center;letter-spacing:.2em;outline:none;
+  transition:border-color .2s,box-shadow .2s;font-family:inherit}
+.lock-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(232,196,104,.15)}
+.lock-btn{width:100%;margin-top:14px;padding:14px;border:none;border-radius:12px;cursor:pointer;
+  background:linear-gradient(90deg,var(--gold2),var(--gold),var(--gold2));color:#171001;
+  font-weight:900;font-size:1rem;letter-spacing:.04em;
+  box-shadow:0 8px 24px rgba(232,196,104,.28);transition:transform .15s,box-shadow .2s;font-family:inherit}
+.lock-btn:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(232,196,104,.38)}
+.lock-err{color:var(--red);font-size:.82rem;margin-top:12px;min-height:1.1em;font-weight:600}
+
+#app{display:none}
+
+/* ── 헤더 ── */
+.site-header{text-align:center;padding:52px 20px 36px}
+.site-header .crest{font-size:62px;filter:drop-shadow(0 8px 22px rgba(232,196,104,.52))}
+.site-header h1{font-family:'Oswald',sans-serif;font-size:clamp(1.65rem,4.2vw,2.6rem);
+  font-weight:700;letter-spacing:.09em;margin-top:13px;
+  background:linear-gradient(90deg,var(--champ),var(--gold),#fff8e0,var(--gold),var(--champ));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header-sub{display:inline-block;margin-top:13px;padding:8px 22px;
+  border:1px solid var(--border);border-radius:999px;background:rgba(13,21,48,.65);
+  backdrop-filter:blur(6px);color:#ccd5ea;font-size:.87rem;font-weight:500;
+  max-width:92vw;line-height:1.7}
+.header-sub b{color:var(--gold)}
+.header-sub .seg{white-space:nowrap;display:inline-block}
+.header-sub .dot{color:var(--muted);margin:0 6px}
+.header-rule{width:160px;height:1px;margin:24px auto 0;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+
+/* ── 탭 ── */
+.tabs{display:flex;justify-content:center;gap:8px;position:sticky;top:0;z-index:100;
+  padding:12px 16px;background:rgba(7,10,24,.85);
+  backdrop-filter:blur(14px);border-bottom:1px solid var(--border);overflow-x:auto}
+.tab{padding:10px 22px;cursor:pointer;font-size:.87rem;font-weight:700;color:var(--muted);
+  border:1px solid transparent;border-radius:999px;transition:all .2s;white-space:nowrap;flex-shrink:0}
+.tab.active{color:#171001;background:linear-gradient(90deg,var(--gold2),var(--gold));
+  box-shadow:0 6px 18px rgba(232,196,104,.3)}
+.tab:hover:not(.active){color:var(--champ);border-color:var(--border)}
+
+/* ── 레이아웃 ── */
+.page{display:none;max-width:1020px;margin:0 auto;padding:28px 18px 80px}
+.page.active{display:block;animation:fadeUp .32s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+.card{background:var(--card);backdrop-filter:blur(12px);border:1px solid var(--soft);
+  border-radius:20px;padding:26px;margin-bottom:22px;
+  box-shadow:0 18px 50px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.05)}
+.card-title{font-size:.98rem;font-weight:900;color:var(--gold);
+  margin-bottom:18px;display:flex;align-items:center;gap:9px;letter-spacing:.02em}
+
+/* ── 룰 ── */
+.prize-banner{background:linear-gradient(120deg,rgba(232,196,104,.16),rgba(201,162,75,.07));
+  border:1px solid var(--border);border-radius:16px;padding:20px 24px;text-align:center;
+  margin-bottom:22px;box-shadow:inset 0 1px 0 rgba(255,255,255,.07)}
+.prize-banner .big{color:var(--gold);font-size:1.3rem;font-weight:900}
+.rule-box{background:var(--card2);border:1px solid var(--soft);border-left:3px solid var(--gold);
+  border-radius:12px;padding:18px 20px;margin-bottom:14px}
+.rule-box h3{color:var(--gold);font-size:.92rem;margin-bottom:9px;font-weight:700}
+.rule-box ul{padding-left:20px;line-height:2;font-size:.87rem;color:#c5cfe0}
+.rule-box.g{border-left-color:var(--green)}.rule-box.g h3{color:var(--green)}
+
+.p-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px}
+.p-card{background:var(--card2);border:1px solid var(--soft);border-radius:14px;
+  padding:13px 8px;text-align:center;transition:border-color .2s}
+.p-card:hover{border-color:var(--border)}
+.p-num{display:inline-block;font-size:.64rem;color:#171001;font-weight:900;
+  background:linear-gradient(90deg,var(--gold2),var(--gold));border-radius:999px;padding:2px 9px}
+.p-name{font-size:.93rem;font-weight:700;margin-top:7px}
+
+/* ── 현황 테이블 ── */
+.dtable{width:100%;border-collapse:collapse;font-size:.88rem}
+.dtable th,.dtable td{padding:11px 13px;text-align:left;border-bottom:1px solid rgba(255,255,255,.06);white-space:nowrap}
+.dtable th{color:var(--gold);font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700}
+.dtable tr:last-child td{border-bottom:none}
+.dtable tr:hover td{background:rgba(255,255,255,.03)}
+.dtable td.col-name{font-weight:700}
+.r1b{background:rgba(91,157,255,.18);color:#8db9ff;border:1px solid rgba(91,157,255,.4);
+  border-radius:6px;padding:1px 7px;font-size:.7rem;font-weight:700}
+.r2b{background:rgba(186,124,255,.16);color:#cfa5ff;border:1px solid rgba(186,124,255,.4);
+  border-radius:6px;padding:1px 7px;font-size:.7rem;font-weight:700}
+.pick-cell{display:flex;align-items:center;gap:7px}
+.pick-cell img{width:30px;height:20px;object-fit:cover;border-radius:3px;
+  flex-shrink:0;box-shadow:0 2px 7px rgba(0,0,0,.45)}
+.pick-cell .flag-ph{width:30px;height:20px;background:#1a2243;border-radius:3px;flex-shrink:0;
+  display:inline-flex;align-items:center;justify-content:center;font-size:.6rem;
+  border:1px dashed rgba(232,196,104,.35)}
+/* 탈락 시 취소선 */
+.pick-cell.out{opacity:.42;text-decoration:line-through;text-decoration-color:var(--red)}
+.pick-cell.out img{filter:grayscale(1)}
+
+/* ── 결과 페이지 ── */
+.res-section-label{font-family:'Oswald',sans-serif;font-size:.8rem;letter-spacing:.18em;
+  color:var(--gold);margin:22px 2px 10px;display:flex;align-items:center;gap:10px}
+.res-section-label::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+
+.survivor-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.survivor-card{background:var(--card2);border:1px solid var(--soft);border-radius:16px;padding:16px;
+  transition:border-color .2s, box-shadow .2s;position:relative;overflow:hidden}
+.survivor-card.alive2{border-color:rgba(61,220,132,.4);background:rgba(61,220,132,.07)}
+.survivor-card.alive1{border-color:rgba(232,196,104,.4);background:rgba(232,196,104,.06)}
+.survivor-card.dead{border-color:rgba(255,107,107,.25);opacity:.6}
+.survivor-card .sc-name{font-weight:800;font-size:.97rem;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-alive{background:var(--green);box-shadow:0 0 8px var(--green)}
+.dot-1{background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.dot-dead{background:var(--red)}
+.team-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:.82rem}
+.team-row:last-child{margin-bottom:0}
+.team-row img{width:32px;height:21px;object-fit:cover;border-radius:4px;box-shadow:0 2px 7px rgba(0,0,0,.45);flex-shrink:0}
+.team-row .ph{width:32px;height:21px;background:#1a2243;border-radius:4px;flex-shrink:0;
+  display:inline-flex;align-items:center;justify-content:center;font-size:.6rem;
+  border:1px dashed rgba(232,196,104,.4)}
+.team-alive{color:var(--text);font-weight:600}
+.team-dead{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--red)}
+.round-tag{font-size:.65rem;background:rgba(255,255,255,.08);border-radius:4px;padding:1px 5px;color:var(--muted);flex-shrink:0}
+
+.champion-banner{background:linear-gradient(140deg,rgba(232,196,104,.2),rgba(201,162,75,.06));
+  border:2px solid rgba(232,196,104,.5);border-radius:22px;padding:40px;text-align:center;
+  margin-bottom:24px;box-shadow:0 24px 70px rgba(232,196,104,.18)}
+.champion-banner img{width:130px;height:87px;object-fit:cover;border-radius:10px;
+  margin:0 auto;box-shadow:0 14px 36px rgba(0,0,0,.55)}
+.champion-banner h2{font-family:'Oswald',sans-serif;font-size:2rem;font-weight:700;
+  letter-spacing:.05em;margin-top:18px;
+  background:linear-gradient(90deg,var(--champ),var(--gold),var(--champ));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.champion-banner p{color:#aebbd8;margin-top:7px;font-size:.9rem}
+
+.congrats-list{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:16px}
+.congrats-card{background:linear-gradient(140deg,rgba(232,196,104,.2),rgba(201,162,75,.08));
+  border:2px solid var(--gold);border-radius:18px;padding:22px 30px;text-align:center;min-width:140px;
+  box-shadow:0 14px 36px rgba(232,196,104,.22)}
+.congrats-card .cc-name{font-size:1.12rem;font-weight:900;color:var(--gold)}
+.congrats-card .cc-sub{font-size:.8rem;color:#cdd6ea;margin-top:5px}
+
+.no-result-msg{text-align:center;color:var(--muted);padding:36px;font-size:.9rem}
+
+/* ── 관리자 ── */
+.admin-lock{padding:20px 0;text-align:center}
+.admin-lock p{color:var(--muted);font-size:.88rem;margin-bottom:14px}
+.admin-pw-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.admin-input{padding:11px 16px;border-radius:10px;border:1px solid var(--border);
+  background:rgba(255,255,255,.06);color:#fff;font-size:.9rem;width:200px;
+  outline:none;text-align:center;font-family:inherit}
+.admin-input:focus{border-color:var(--gold)}
+.admin-err{color:var(--red);font-size:.8rem;margin-top:10px;font-weight:600}
+
+.country-toggle-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
+.ct-card{background:var(--card2);border:2px solid var(--soft);border-radius:13px;
+  padding:12px 7px 10px;text-align:center;cursor:pointer;
+  transition:all .2s;user-select:none;position:relative}
+.ct-card:hover{border-color:rgba(232,196,104,.5);transform:translateY(-2px)}
+.ct-card img,.ct-card .flag-ph{width:50px;height:33px;object-fit:cover;border-radius:5px;
+  display:block;margin:0 auto;box-shadow:0 3px 10px rgba(0,0,0,.45)}
+.ct-card .flag-ph{display:flex;align-items:center;justify-content:center;
+  background:#1a2243;border:1px dashed rgba(232,196,104,.4);font-size:.9rem}
+.ct-card .ct-name{font-size:.73rem;margin-top:7px;color:#cfd6e6;font-weight:500}
+.ct-card.alive{border-color:rgba(61,220,132,.5);background:rgba(61,220,132,.08)}
+.ct-card.alive .ct-name{color:var(--green);font-weight:700}
+.ct-card.eliminated{border-color:rgba(255,107,107,.4);background:rgba(255,107,107,.08);opacity:.7}
+.ct-card.eliminated .ct-name{color:var(--red);font-weight:700}
+.ct-card.eliminated img{filter:grayscale(.7)}
+.ct-badge{position:absolute;top:6px;right:6px;font-size:.72rem;font-weight:800;
+  border-radius:6px;padding:2px 6px}
+.badge-alive{background:rgba(61,220,132,.2);color:var(--green)}
+.badge-out{background:rgba(255,107,107,.2);color:var(--red)}
+
+/* ── 공통 버튼 ── */
+button{border:none;border-radius:10px;cursor:pointer;font-weight:800;
+  transition:all .15s;font-family:'Noto Sans KR',sans-serif}
+button:hover{transform:translateY(-2px)}
+button:active{transform:translateY(0)}
+.btn-primary{background:linear-gradient(90deg,var(--gold2),var(--gold),var(--gold2));
+  color:#171001;padding:12px 28px;font-size:.94rem;
+  box-shadow:0 8px 24px rgba(232,196,104,.28)}
+.btn-ghost{background:rgba(255,255,255,.07);color:var(--text);padding:11px 20px;
+  font-size:.87rem;border:1px solid var(--soft)}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px}
+
+footer{text-align:center;color:rgba(141,150,173,.55);font-size:.73rem;
+  padding:20px;letter-spacing:.07em}
+
+@media(max-width:540px){
+  .site-header{padding:34px 14px 24px}
+  .site-header .crest{font-size:52px}
+  .header-sub{font-size:.8rem;padding:8px 16px}
+  .tabs{gap:6px;padding:10px 10px}
+  .tab{padding:8px 13px;font-size:.76rem}
+  .page{padding:22px 12px 70px}
+  .card{padding:16px}
+  .card-title{font-size:.92rem}
+  /* 픽 현황 테이블: 컴팩트 + 가로 스크롤 */
+  .dtable{font-size:.82rem}
+  .dtable th,.dtable td{padding:9px 9px}
+  .dtable th{font-size:.66rem}
+  .pick-cell{gap:6px}
+  .pick-cell img{width:26px;height:18px}
+  .prize-banner{padding:16px 16px}
+  .prize-banner .big{font-size:1.15rem}
+  .survivor-grid{grid-template-columns:1fr}
+  .p-grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
+  .country-toggle-grid{grid-template-columns:repeat(auto-fill,minmax(90px,1fr))}
+}
+@media(max-width:380px){
+  .dtable th,.dtable td{padding:8px 7px}
+  .dtable{font-size:.78rem}
+  .pick-cell img{width:24px;height:16px}
+}
+</style>
+</head>
+<body>
+
+<!-- 입장 잠금 -->
+<div id="lock">
+  <div class="lock-card">
+    <div class="lock-trophy">🏆</div>
+    <h2>2026 FIFA WORLD CUP</h2>
+    <p>우승국 예측 페이지 · 입장 비밀번호를 입력하세요</p>
+    <input class="lock-input" id="lock-input" type="password" placeholder="••••••"
+           onkeydown="if(event.key==='Enter')tryEnter()"/>
+    <button class="lock-btn" onclick="tryEnter()">입장하기</button>
+    <div class="lock-err" id="lock-err"></div>
+  </div>
+</div>
+
+<div id="app">
+
+<div class="site-header">
+  <div class="crest">🏆</div>
+  <h1>2026 FIFA WORLD CUP<br>우승국 예측</h1>
+  <div class="header-sub"><span class="seg">12명 참가</span><span class="dot">·</span><span class="seg">1인 <b>10,000원</b></span><span class="dot">·</span><span class="seg">우승국 적중 시 <b>120,000원</b> 획득</span></div>
+  <div class="header-rule"></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showPage('page-rules')">📋 룰</div>
+  <div class="tab" onclick="showPage('page-board')">📊 픽 현황</div>
+  <div class="tab" onclick="showPage('page-result')">🥇 생존 현황</div>
+  <div class="tab" onclick="showPage('page-admin')">🔧 관리자</div>
+</div>
+
+<!-- ══ 룰 ══ -->
+<div id="page-rules" class="page active">
+  <div class="prize-banner">
+    💰 총 상금 <span class="big">120,000원</span><br>
+    <span style="font-size:.84rem;font-weight:500;color:#aebbd8">1인 10,000원 · 우승국을 맞춘 사람(들)이 전액 획득</span>
+  </div>
+  <div class="card">
+    <div class="card-title">📋 진행 방식</div>
+    <div class="rule-box"><h3>① 순서 결정</h3><ul><li>카카오 순서뽑기로 1~12번 순서를 정합니다.</li></ul></div>
+    <div class="rule-box">
+      <h3>② 1라운드 — 1번 → 12번, 각 1개국 선택</h3>
+      <ul>
+        <li>1번부터 12번까지 차례대로 예상 우승국가를 하나씩 선택합니다.</li>
+        <li>이미 다른 사람이 선택한 국가도 중복 선택 가능합니다.</li>
+      </ul>
+    </div>
+    <div class="rule-box">
+      <h3>③ 2라운드 — 12번 → 1번 역순, 각 1개국 선택</h3>
+      <ul>
+        <li>12번부터 1번까지 역순으로 두 번째 예상 우승국가를 선택합니다.</li>
+        <li>1라운드와 동일 국가, 혹은 같은 국가 2개 선택도 가능합니다.</li>
+      </ul>
+    </div>
+    <div class="rule-box g">
+      <h3>④ 결과 발표</h3>
+      <ul>
+        <li>월드컵 진행 중 탈락 국가가 나올 때마다 관리자가 실시간으로 반영합니다.</li>
+        <li>두 팀 모두 탈락하면 해당 참가자는 탈락!</li>
+        <li>우승국을 보유한 사람(최대 2명)이 상금 전액을 획득합니다! 🎉</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">👥 참가자 명단</div>
+    <div class="p-grid" id="rule-p-grid"></div>
+  </div>
+</div>
+
+<!-- ══ 픽 현황 ══ -->
+<div id="page-board" class="page">
+  <div class="card">
+    <div class="card-title">📊 최종 픽 현황</div>
+    <div style="overflow-x:auto">
+      <table class="dtable">
+        <thead><tr>
+          <th>번호</th><th>참가자</th>
+          <th><span class="r1b">1R</span> 선택국가</th>
+          <th><span class="r2b">2R</span> 선택국가</th>
+        </tr></thead>
+        <tbody id="board-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 생존 현황 (결과) ══ -->
+<div id="page-result" class="page">
+  <div id="champion-area"></div>
+  <div id="result-content"></div>
+</div>
+
+<!-- ══ 관리자 ══ -->
+<div id="page-admin" class="page">
+  <div class="card" id="admin-lock-card">
+    <div class="card-title">🔧 관리자 로그인</div>
+    <div class="admin-lock">
+      <p>탈락국 설정은 관리자만 가능합니다.</p>
+      <div class="admin-pw-row">
+        <input class="admin-input" id="admin-input" type="password" placeholder="관리자 비밀번호"
+               onkeydown="if(event.key==='Enter')tryAdmin()"/>
+        <button class="btn-primary" onclick="tryAdmin()">확인</button>
+      </div>
+      <div class="admin-err" id="admin-err"></div>
+    </div>
+  </div>
+  <div id="admin-panel" style="display:none">
+    <div class="card">
+      <div class="card-title">🏳️ 탈락국 설정 <span style="color:var(--muted);font-weight:400;font-size:.8rem">— 클릭으로 탈락/생존 전환</span></div>
+      <p style="color:var(--muted);font-size:.82rem;margin-bottom:16px">탈락 처리된 국가는 즉시 [생존 현황] 탭에 반영됩니다.</p>
+      <div class="country-toggle-grid" id="admin-grid"></div>
+      <div class="btn-row">
+        <button class="btn-ghost" onclick="adminLogout()">로그아웃</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>2026 FIFA WORLD CUP · CANADA / MEXICO / USA · June–July 2026</footer>
+
+</div><!-- /#app -->
+
+<script>
+// ══════════════════════════════════════════
+//  비밀번호
+// ══════════════════════════════════════════
+const ENTRY_PW = 'wc2026';
+const ADMIN_PW = 'rhksflwk';
+
+function tryEnter(){
+  if(document.getElementById('lock-input').value === ENTRY_PW){
+    sessionStorage.setItem('wc26-auth','1');
+    document.getElementById('lock').style.display='none';
+    document.getElementById('app').style.display='block';
+  } else {
+    document.getElementById('lock-err').textContent='비밀번호가 올바르지 않습니다.';
+    document.getElementById('lock-input').value='';
+  }
+}
+if(sessionStorage.getItem('wc26-auth')==='1'){
+  document.getElementById('lock').style.display='none';
+  document.getElementById('app').style.display='block';
+}
+
+// ══════════════════════════════════════════
+//  데이터 — 최종 픽 (하드코딩)
+// ══════════════════════════════════════════
+const PARTICIPANTS = [
+  "조형준","김준우","한성욱","권혁","이경현","오교원",
+  "김해찬","배성준","황택섭","곽동우","왕선식","이인태"
+];
+
+const PICKS = {
+  "조형준": {r1:"es",     r2:"hr"},
+  "김준우": {r1:"fr",     r2:"mx"},
+  "한성욱": {r1:"pt",     r2:"uy"},
+  "권혁":   {r1:"kr",     r2:"jp"},
+  "이경현": {r1:"gb-eng", r2:"de"},
+  "오교원": {r1:"ar",     r2:"pt"},
+  "김해찬": {r1:"nl",     r2:"ar"},
+  "배성준": {r1:"br",     r2:"nl"},
+  "황택섭": {r1:"de",     r2:"br"},
+  "곽동우": {r1:"jp",     r2:"gb-eng"},
+  "왕선식": {r1:"mx",     r2:"es"},
+  "이인태": {r1:"be",     r2:"fr"},
+};
+
+// 픽에 등장하는 14개국
+const COUNTRIES = [
+  {code:"es",     name:"스페인"},
+  {code:"hr",     name:"크로아티아"},
+  {code:"fr",     name:"프랑스"},
+  {code:"mx",     name:"멕시코"},
+  {code:"pt",     name:"포르투갈"},
+  {code:"uy",     name:"우루과이"},
+  {code:"kr",     name:"대한민국"},
+  {code:"jp",     name:"일본"},
+  {code:"gb-eng", name:"잉글랜드"},
+  {code:"de",     name:"독일"},
+  {code:"ar",     name:"아르헨티나"},
+  {code:"nl",     name:"네덜란드"},
+  {code:"br",     name:"브라질"},
+  {code:"be",     name:"벨기에"},
+];
+
+function getCountry(code){ return COUNTRIES.find(c=>c.code===code)||{code,name:code}; }
+
+// ══════════════════════════════════════════
+//  STATE — 탈락국 목록 (localStorage)
+// ══════════════════════════════════════════
+// 2026 월드컵 현재 탈락국 (2026-07-05 기준) — 관리자가 토글하면 그 값이 우선됨
+const DEFAULT_ELIM = ["hr","uy","kr","jp","de","nl"];
+let eliminated = new Set(JSON.parse(localStorage.getItem('wc26-elim')||JSON.stringify(DEFAULT_ELIM)));
+function saveElim(){ localStorage.setItem('wc26-elim', JSON.stringify([...eliminated])); }
+function isElim(code){ return eliminated.has(code); }
+
+// ══════════════════════════════════════════
+//  NAV
+// ══════════════════════════════════════════
+const PAGE_IDX={'page-rules':0,'page-board':1,'page-result':2,'page-admin':3};
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.tab')[PAGE_IDX[id]].classList.add('active');
+  if(id==='page-rules')  renderRules();
+  if(id==='page-board')  renderBoard();
+  if(id==='page-result') renderResult();
+  if(id==='page-admin')  renderAdmin();
+}
+
+// ══════════════════════════════════════════
+//  RULES
+// ══════════════════════════════════════════
+function renderRules(){
+  document.getElementById('rule-p-grid').innerHTML =
+    PARTICIPANTS.map((p,i)=>`<div class="p-card"><span class="p-num">${i+1}번</span><div class="p-name">${p}</div></div>`).join('');
+}
+
+// ══════════════════════════════════════════
+//  BOARD (픽 현황)
+// ══════════════════════════════════════════
+function flagImg(code, w, h){
+  return `<img src="https://flagcdn.com/w80/${code}.png" alt="" style="width:${w}px;height:${h}px;object-fit:cover;border-radius:${Math.round(h/6)}px;box-shadow:0 2px 7px rgba(0,0,0,.45);flex-shrink:0">`;
+}
+function renderBoard(){
+  document.getElementById('board-tbody').innerHTML = PARTICIPANTS.map((p,i)=>{
+    const pk=PICKS[p];
+    const c1=getCountry(pk.r1), c2=getCountry(pk.r2);
+    const out1=isElim(pk.r1), out2=isElim(pk.r2);
+    return `<tr>
+      <td style="color:var(--muted);font-weight:700">${i+1}</td>
+      <td style="font-weight:700">${p}</td>
+      <td><div class="pick-cell${out1?' out':''}">
+        ${flagImg(pk.r1,30,20)} ${c1.name}
+      </div></td>
+      <td><div class="pick-cell${out2?' out':''}">
+        ${flagImg(pk.r2,30,20)} ${c2.name}
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+//  RESULT (생존 현황)
+// ══════════════════════════════════════════
+function renderResult(){
+  const pot = PARTICIPANTS.length * 10000;
+
+  // 각 참가자의 생존 팀 수 계산
+  const alive2=[], alive1=[], dead=[];
+  PARTICIPANTS.forEach(p=>{
+    const pk=PICKS[p];
+    const a1=!isElim(pk.r1), a2=!isElim(pk.r2);
+    const obj={p, r1:pk.r1, r2:pk.r2, a1, a2, cnt:+a1+a2};
+    if(a1&&a2) alive2.push(obj);
+    else if(a1||a2) alive1.push(obj);
+    else dead.push(obj);
+  });
+
+  // 챔피언 결정: 살아있는 팀이 단 1개뿐인 경우
+  const allAliveCodes = new Set();
+  PARTICIPANTS.forEach(p=>{
+    const pk=PICKS[p];
+    if(!isElim(pk.r1)) allAliveCodes.add(pk.r1);
+    if(!isElim(pk.r2)) allAliveCodes.add(pk.r2);
+  });
+
+  let champHtml = '';
+  if(allAliveCodes.size===1){
+    const champCode = [...allAliveCodes][0];
+    const champ = getCountry(champCode);
+    const winners = PARTICIPANTS.filter(p=>PICKS[p].r1===champCode||PICKS[p].r2===champCode);
+    const share = Math.floor(pot/winners.length).toLocaleString();
+    champHtml = `
+      <div class="champion-banner">
+        <img src="https://flagcdn.com/w160/${champCode}.png" alt="${champ.name}">
+        <h2>🏆 ${champ.name} 우승!</h2>
+        <p>2026 FIFA WORLD CUP CHAMPION</p>
+        <div class="congrats-list" style="margin-top:22px">
+          ${winners.map(w=>`<div class="congrats-card"><div class="cc-name">🏆 ${w}</div><div class="cc-sub">${share}원 획득!</div></div>`).join('')}
+        </div>
+      </div>`;
+  } else if(allAliveCodes.size===0){
+    champHtml = `<div style="text-align:center;padding:30px;color:var(--muted)">😢 모든 팀이 탈락했습니다.</div>`;
+  }
+  document.getElementById('champion-area').innerHTML = champHtml;
+
+  // 생존자 카드
+  function teamRow(code, round, alive){
+    const c=getCountry(code);
+    return `<div class="team-row">
+      <img src="https://flagcdn.com/w80/${code}.png" alt="">
+      <span class="${alive?'team-alive':'team-dead'}">${c.name}</span>
+      <span class="round-tag">${round}</span>
+      ${alive?'<span style="color:var(--green);font-size:.8rem;margin-left:2px">✓</span>':'<span style="color:var(--red);font-size:.8rem;margin-left:2px">✗</span>'}
+    </div>`;
+  }
+
+  function makeCard(obj){
+    const cls = obj.cnt===2?'alive2':obj.cnt===1?'alive1':'dead';
+    const dot  = obj.cnt===2?'dot-alive':obj.cnt===1?'dot-1':'dot-dead';
+    const label= obj.cnt===2?'2팀 생존':obj.cnt===1?'1팀 생존':'탈락';
+    return `<div class="survivor-card ${cls}">
+      <div class="sc-name"><span class="status-dot ${dot}"></span>${obj.p} <span style="font-size:.72rem;font-weight:500;color:var(--muted);margin-left:auto">${label}</span></div>
+      ${teamRow(obj.r1,'1R',obj.a1)}
+      ${teamRow(obj.r2,'2R',obj.a2)}
+    </div>`;
+  }
+
+  let html = '';
+  if(alive2.length){
+    html+=`<div class="res-section-label">✅ 2팀 생존 (${alive2.length}명)</div>
+           <div class="survivor-grid">${alive2.map(makeCard).join('')}</div>`;
+  }
+  if(alive1.length){
+    html+=`<div class="res-section-label">⚡ 1팀 생존 (${alive1.length}명)</div>
+           <div class="survivor-grid">${alive1.map(makeCard).join('')}</div>`;
+  }
+  if(dead.length){
+    html+=`<div class="res-section-label">💀 탈락 (${dead.length}명)</div>
+           <div class="survivor-grid">${dead.map(makeCard).join('')}</div>`;
+  }
+  if(!html) html=`<p class="no-result-msg">아직 탈락한 팀이 없습니다.<br>관리자가 탈락국을 설정하면 여기에 반영됩니다.</p>`;
+
+  document.getElementById('result-content').innerHTML = html;
+}
+
+// ══════════════════════════════════════════
+//  ADMIN
+// ══════════════════════════════════════════
+let adminUnlocked = sessionStorage.getItem('wc26-admin')==='1';
+
+function tryAdmin(){
+  const v = document.getElementById('admin-input').value;
+  if(v===ADMIN_PW){
+    adminUnlocked=true;
+    sessionStorage.setItem('wc26-admin','1');
+    showAdminPanel();
+  } else {
+    document.getElementById('admin-err').textContent='비밀번호가 올바르지 않습니다.';
+    document.getElementById('admin-input').value='';
+  }
+}
+function adminLogout(){
+  adminUnlocked=false;
+  sessionStorage.removeItem('wc26-admin');
+  document.getElementById('admin-lock-card').style.display='block';
+  document.getElementById('admin-panel').style.display='none';
+  document.getElementById('admin-input').value='';
+  document.getElementById('admin-err').textContent='';
+}
+function showAdminPanel(){
+  document.getElementById('admin-lock-card').style.display='none';
+  document.getElementById('admin-panel').style.display='block';
+  buildAdminGrid();
+}
+function renderAdmin(){
+  if(adminUnlocked) showAdminPanel();
+  else {
+    document.getElementById('admin-lock-card').style.display='block';
+    document.getElementById('admin-panel').style.display='none';
+  }
+}
+function buildAdminGrid(){
+  const grid = document.getElementById('admin-grid');
+  grid.innerHTML = COUNTRIES.map(c=>{
+    const out = isElim(c.code);
+    return `<div class="ct-card ${out?'eliminated':'alive'}" onclick="toggleElim('${c.code}')">
+      <img src="https://flagcdn.com/w80/${c.code}.png" alt="${c.name}">
+      <div class="ct-name">${c.name}</div>
+      <span class="ct-badge ${out?'badge-out':'badge-alive'}">${out?'탈락':'생존'}</span>
+    </div>`;
+  }).join('');
+}
+function toggleElim(code){
+  if(isElim(code)) eliminated.delete(code);
+  else eliminated.add(code);
+  saveElim();
+  buildAdminGrid();
+  // 결과 탭 미리 캐시 갱신 (탭 전환 시 자동 반영됨)
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+renderRules();
+</script>
+</body>
+</html>
